@@ -1,6 +1,8 @@
 import datetime
+from tkinter import ttk
 import tkinter as tk
 from tkinter import *
+from tkinter.messagebox import showinfo as ms
 
 import pymysql
 
@@ -38,7 +40,7 @@ def zapolnenie():
             res = cursor.fetchall()
             arg = {}
             for i in res:
-                arg[i["name_dolj"]] = [i["id_dolj"]]
+                arg[i["name_dolj"]] = i["id_dolj"]
             return arg
 
     arg1 = get_doljnost()
@@ -66,7 +68,7 @@ def zapolnenie():
             res = cursor.fetchall()
             arg = {}
             for i in res:
-                arg[i["name_profs"]] = [i["id_profs"]]
+                arg[i["name_profs"]] = i["id_profs"]
             return arg
 
     arg2 = get_profession()
@@ -91,7 +93,7 @@ def zapolnenie():
             res = cursor.fetchall()
             arg = {}
             for i in res:
-                arg[i["name_obraz"]] = [i["id_obraz"]]
+                arg[i["name_obraz"]] = i["id_obraz"]
             return arg
 
     arg3 = get_obrazovanie()
@@ -116,7 +118,7 @@ def zapolnenie():
             res = cursor.fetchall()
             arg = {}
             for i in res:
-                arg[i["name_levc"]] = [i["id_levc"]]
+                arg[i["name_levc"]] = i["id_levc"]
             return arg
 
     arg4 = get_levc()
@@ -144,16 +146,58 @@ def zapolnenie():
             fiov = txt_1.get()
             actual = txt_3.get()
             res = result
+            print(arg1)
             now = datetime.datetime.now()
             k = (now.strftime("%Y-%m-%d"))
             sql = f"INSERT INTO vakansia (data_opubl, kod_dolj, actual, kod_profs, kod_obraz, kod_levc, FIO) " \
                   f"VALUES('{k}', '{arg1[res[0]]}', '{actual}', '{arg2[res[1]]}', '{arg3[res[2]]}', '{arg4[res[3]]}', '{fiov}')"
-            print(sql)
+            message = f"Дата: {k}" \
+                      f"Код Должности: {arg1[res[0]]},\n" \
+                      f"Актуальность: {actual},\n" \
+                      f"Код Профессии: {arg2[res[1]]},\n" \
+                      f"Kод Образования: {arg3[res[2]]},\n" \
+                      f"Код Уровень владения ПК: {arg4[res[3]]},\n" \
+                      f"ФИО: {fiov}"
+            ms("Вывод:", message)
             cursor.execute(sql)
+            connection.commit()
 
-    btn_reg = Button(window2, text='Отправить', command=lambda: get_vakansia(result), bg='#BF9930').grid(row=12,
-                                                                                                         column=2)
+    btn_reg = Button(window2, text='Отправить', command=lambda: get_vakansia(result), bg='#BF9930')
+    btn_reg.grid(row=12, column=2)
     window2.mainloop()
+
+def table_actual():
+    with connection.cursor() as cursor:
+        window = Tk()
+        columns = ("id_vak", "data_opubl", "kod_dolj", "actual", "kod_profs", "kod_obraz", "kod_levc", "FIO")
+        tree = ttk.Treeview(window, columns=columns, show="headings")
+        tree.grid(row=10, column=1, columnspan=2, sticky=EW, padx=1, pady=1)
+        tree.heading("id_vak", text="Номер вакансии")
+        tree.heading("data_opubl", text="Дата опубликации")
+        tree.heading("kod_dolj", text="Код должности")
+        tree.heading("actual", text="Актуальность")
+        tree.heading("kod_profs", text="Код профессии")
+        tree.heading("kod_obraz", text="Код образование")
+        tree.heading("kod_levc", text="Код уровня владения ПК")
+        tree.heading("FIO", text="ФИО")
+        cur1 = f"SELECT * FROM `vakansia` WHERE actual = 'Актуально'"
+        cursor.execute(cur1)
+        reess = cursor.fetchall()
+        for row in reess:
+            a = (row['id_vak'])
+            b = (row['data_opubl'])
+            c = (row['kod_dolj'])
+            c1 = (row['actual'])
+            c2 = (row['kod_profs'])
+            c3 = (row['kod_obraz'])
+            d1 = (row['kod_levc'])
+            d2 = (row['FIO'])
+            d = [(a), (b), (c), (c1), (c2), (c3), (d1), (d2)]
+            tree.insert("", tk.END, values=(d))
+
+        connection.commit()
+    window.mainloop()
+    connection.commit()
 
 
 root1 = Tk()
@@ -163,4 +207,6 @@ root1.resizable(False, False)
 root1.configure(background='#BF7F30')
 btn_reg = Button(text='Заполнить заявку', command=zapolnenie, bg='#BF9930')
 btn_reg.place(x=90, y=75)
+btn_reg = Button(text='Список актуальных вакансий', command=table_actual, bg='#BF9930')
+btn_reg.place(x=60, y=110)
 root1.mainloop()
